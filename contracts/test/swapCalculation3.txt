@@ -1,0 +1,57 @@
+// this swapCalculation3 used for estimate: here _inputToken is outputToken, _inputAmount is outputAmount
+    function swapCalculation3(address _lp,address _inputToken,uint _inputAmount)public view returns (uint _outputAmount,uint[2] memory reserve,uint[2] memory priceCumulative,uint b) {
+        structlibrary.reserve memory _lpDetails;
+        uint8 j;
+        uint pricexy;
+        uint pricexyInner;
+        uint pd;
+        uint k;
+
+        _lpDetails = obtainReserves(_lp);
+        uint a = _lpDetails.a0;
+
+        if(_inputToken == _lpDetails.assetAddr[0]){
+            j=0;
+        }else if(_inputToken == _lpDetails.assetAddr[1]){
+            j=1;
+        }else{
+            require(_inputToken == _lpDetails.assetAddr[0],"X SWAP CORE: WRONG Token Input");
+        }
+        require(_lpDetails.reserve[j] >= _inputAmount*10,"X SWAP CORE: EXCEED  reserve Limits, NEED a smaller amount");
+        pricexy = (_lpDetails.priceCumulative[j] * 1 ether) / _lpDetails.priceCumulative[1-j];
+        pricexyInner = (_lpDetails.reserve[1-j] * 1 ether) / _lpDetails.reserve[j];
+
+        if(pricexy>pricexyInner){
+            pd = (pricexy - pricexyInner)* 1 ether/pricexyInner;
+        }else{
+            pd = (pricexyInner - pricexy)* 1 ether/pricexy;
+        }
+        if(_lpDetails.a0 == 0){
+            b = 0;
+        }else{
+            a =  _lpDetails.a0 * 1 ether / (1 ether + pd*pd/1 ether);
+            b = (1 ether+a)*_lpDetails.reserve[1-j] / pricexy;
+            if(b < _lpDetails.reserve[j]){
+                a = a/2;
+                b = (1 ether+a)*_lpDetails.reserve[1-j] / pricexy;
+                if(b < _lpDetails.reserve[j]){
+                    a = 0;
+                    b = 0;
+                }else{
+                    b = b - _lpDetails.reserve[j];
+                }
+            }else{
+                b = b - _lpDetails.reserve[j];
+            }
+        }
+        
+        k = (1 ether+a) * _lpDetails.reserve[1-j] /1 ether;
+        k = k * (_lpDetails.reserve[j] + b);
+        _outputAmount = k/(_lpDetails.reserve[j] + b - _inputAmount) - ((1 ether+a)*_lpDetails.reserve[1-j])/1 ether;
+        _outputAmount = _outputAmount *(10000-_lpDetails.balanceFee)/10000;//add fee to LP
+
+        reserve[j] = _lpDetails.reserve[j] - _inputAmount;
+        reserve[1-j] = _lpDetails.reserve[1-j] + _outputAmount;
+        priceCumulative[j] = (1 ether+a)*_lpDetails.reserve[1-j]/1 ether + _outputAmount;
+        priceCumulative[1-j] =  _lpDetails.reserve[j] + b + _inputAmount;
+    }
