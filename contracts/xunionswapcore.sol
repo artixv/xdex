@@ -10,9 +10,13 @@ import "./interfaces/ixvaults.sol";
 contract xUnionSwapCore{
 
     address public vaults;
+    address public riskMitigationFund;
+    address public slcaddr;
 
-    constructor(address _vaults) {
+    constructor(address _vaults, address _riskMitigationFund, address _slcaddr) {
         vaults = _vaults;
+        riskMitigationFund = _riskMitigationFund;
+        slcaddr = _slcaddr;
     }
 
     //-----------------------------------------------------------------
@@ -201,17 +205,79 @@ contract xUnionSwapCore{
         priceCumulative[1-j] =  _lpDetails.reserve[j] + b + _outputAmount;
     }
 
+    // vaults :: for exchange estimate
+    function xExchangeEstimateInput(address[] memory tokens,uint amountIn) internal view returns(uint output) {
+        uint[4] memory inputAmount;
+        uint[4] memory outputAmount;
+        address[] memory _lp = new address[](tokens.length);
+        uint i;
+        uint[2] memory priceCumulative;
+        uint[3] memory priceImpactAndFees;
 
-    function afterSwap(structlibrary.exVaults memory _exVaults,uint b) public{
-        // address[2] lp;
-        // uint[2] totalLps;
-        // uint tokenLength = _exVaults.tokens.length;
-        // lp[0] = ixVaults(vaults).getCoinToStableLpPair(_exVaults.tokens[0]);
-        // lp[1] = ixVaults(vaults).getCoinToStableLpPair(_exVaults.tokens[tokenLength-1]);
-        // totalLps[0] = IERC20(lp[0]).totalSupply;
-        // totalLps[1] = IERC20(lp[1]).totalSupply;
+        require(tokens.length>1&&tokens.length<=5,"X CORE: exceed MAX path lengh:2~5");
+        outputAmount[0] = amountIn;
+        require( outputAmount[0] > 0,"X CORE: Input need > 0");
+        
+        priceImpactAndFees[1] = 10000;
+        priceImpactAndFees[2] = 10000;
+        for(i=0;i<tokens.length-1;i++){
+            if(i==0){
+                inputAmount[i] = outputAmount[i];
+                
+            }else{
+                inputAmount[i] = outputAmount[i-1];
+            }
+            
+            _lp[i]=ixVaults(vaults).getPair(tokens[i], tokens[i+1]);
+            (output,) = ixVaults(vaults).getLpSettings(_lp[i]);// public view returns(uint32 balanceFee, uint a0);
+            priceImpactAndFees[0] += output;
+
+            (outputAmount[i],,priceCumulative,) = 
+            swapCalculation2(_lp[i],tokens[i],inputAmount[i]);//external view returns
+            priceImpactAndFees[1] = priceImpactAndFees[1] * priceCumulative[0] / priceCumulative[1];
+            priceImpactAndFees[2] = priceImpactAndFees[2] * ixVaults(vaults).getLpPrice(_lp[i]) / 1 ether;
+            }
+        output = outputAmount[tokens.length-2];
     }
-    function afterSwap2(structlibrary.exVaults memory _exVaults,uint a,uint b) public  {}
+
+
+    function afterSwap(structlibrary.exVaults memory _exVaults,uint a,uint b) public returns(bool ToF, structlibrary.exVaults memory _toUesd){
+        // uint k = _exVaults.tokens.length;
+        // uint out;
+        // uint amountIn ;
+        // if(a != 0 && b == 0){
+        //     amountIn = _exVaults.amountIn;
+        // }else{
+        //     amountIn = _exVaults.amountIn/4;
+        // }
+        // if(k == 2){
+        //     if(_exVaults.tokens[0]!=slcaddr && _exVaults.tokens[1]!=slcaddr){
+        //         ToF = false;
+        //         return;
+        //     }
+        //     uint tokens = new address[](4);
+        //     tokens[0] = _exVaults.tokens[0];
+        //     tokens[1] = slcaddr;
+        //     tokens[2] = _exVaults.tokens[1];
+        //     tokens[3] = _exVaults.tokens[0];
+        //     out = xExchangeEstimateInput(tokens, amountIn) ;
+        //     if (out > amountIn + 10000){
+        //         _toUesd.tokens = tokens;
+        //         _toUesd.amountIn = amountIn;
+        //         _toUesd.amountOut = amountIn;
+        //     }
+
+        // }else if(k ==3){
+
+        // }else if(k > 3){
+        //     ToF = false;
+        //     return;
+        // }
+
+    }
+    function afterSwap2(structlibrary.exVaults memory _exVaults,uint a,uint b) public  {
+
+    }
 
     function afterSwap3(structlibrary.exVaults memory _exVaults,uint a,uint b) public  {}
 

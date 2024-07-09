@@ -12,6 +12,7 @@ import "./libraries/structlibrary.sol";
 import "./interfaces/ixunionswappair.sol";
 import "./interfaces/ixunionfactory.sol";
 import "./xunionswapcore.sol";
+
 contract xUnionSwapVaults{
     //----------------------Persistent Variables ----------------------
     uint public constant MINIMUM_LIQUIDITY = 10**3;
@@ -243,8 +244,8 @@ contract xUnionSwapVaults{
         uint[4] memory outputAmount;
         uint[2] memory tempReserve;
         address[] memory _lp = new address[](_exVaults.tokens.length);
-        uint[2] memory totalTokenInVaults;
-        address[2] memory reserveAddr;// = getLpPair( _lp) ;
+        // uint[2] memory totalTokenInVaults;
+        // address[2] memory reserveAddr;// = getLpPair( _lp) ;
         uint i;
         
         require(_exVaults.tokens.length>1&&_exVaults.tokens.length<=5,"X Swap Vaults: exceed MAX path lengh:2~5");
@@ -261,26 +262,27 @@ contract xUnionSwapVaults{
             
             _lp[i]=iXunionFactory(factory).getPair(_exVaults.tokens[i], _exVaults.tokens[i+1]);
             (outputAmount[i],tempReserve,reserves[_lp[i]].priceCumulative,b[i]) = 
-            xUnionSwapCore(core).swapCalculation(_lp[i],_exVaults.tokens[i],inputAmount[i],i);//external view returns
-            totalTokenInVaults = getLpTokenSum( _lp[i]);
-            reserveAddr = getLpPair( _lp[i]) ;
-            if(getLpInputTokenSlot(_lp[i],_exVaults.tokens[i])){
-                if(i==0){
-                    totalTokenInVaults[0] -= inputAmount[i];
-                }
-                reserves[_lp[i]].reserve[0] += inputAmount[i] * relativeTokenUpperLimit[reserveAddr[0]] / totalTokenInVaults[0];
-                relativeTokenUpperLimit[reserveAddr[0]] += inputAmount[i] * relativeTokenUpperLimit[reserveAddr[0]] / totalTokenInVaults[0];
-                reserves[_lp[i]].reserve[1] -= outputAmount[i] * relativeTokenUpperLimit[reserveAddr[1]] / totalTokenInVaults[1];
-                relativeTokenUpperLimit[reserveAddr[1]] -= outputAmount[i] * relativeTokenUpperLimit[reserveAddr[1]] / totalTokenInVaults[1];
-            }else{
-                if(i==0){
-                    totalTokenInVaults[1] -= inputAmount[i];
-                }
-                reserves[_lp[i]].reserve[1] += inputAmount[i] * relativeTokenUpperLimit[reserveAddr[1]] / totalTokenInVaults[1];
-                relativeTokenUpperLimit[reserveAddr[1]] += inputAmount[i] * relativeTokenUpperLimit[reserveAddr[1]] / totalTokenInVaults[1];
-                reserves[_lp[i]].reserve[0] -= outputAmount[i] * relativeTokenUpperLimit[reserveAddr[0]] / totalTokenInVaults[0];
-                relativeTokenUpperLimit[reserveAddr[0]] -= outputAmount[i] * relativeTokenUpperLimit[reserveAddr[0]] / totalTokenInVaults[0];
-            }
+            xUnionSwapCore(core).swapCalculation(_lp[i],_exVaults.tokens[i],inputAmount[i],i); //external view returns
+            amountToReserves( _exVaults.tokens[i],  _lp[i], inputAmount[i], outputAmount[i], i) ;
+            // totalTokenInVaults = getLpTokenSum( _lp[i]);
+            // reserveAddr = getLpPair( _lp[i]) ;
+            // if(getLpInputTokenSlot(_lp[i],_exVaults.tokens[i])){
+            //     if(i==0){
+            //         totalTokenInVaults[0] -= inputAmount[i];
+            //     }
+            //     reserves[_lp[i]].reserve[0] += inputAmount[i] * relativeTokenUpperLimit[reserveAddr[0]] / totalTokenInVaults[0];
+            //     relativeTokenUpperLimit[reserveAddr[0]] += inputAmount[i] * relativeTokenUpperLimit[reserveAddr[0]] / totalTokenInVaults[0];
+            //     reserves[_lp[i]].reserve[1] -= outputAmount[i] * relativeTokenUpperLimit[reserveAddr[1]] / totalTokenInVaults[1];
+            //     relativeTokenUpperLimit[reserveAddr[1]] -= outputAmount[i] * relativeTokenUpperLimit[reserveAddr[1]] / totalTokenInVaults[1];
+            // }else{
+            //     if(i==0){
+            //         totalTokenInVaults[1] -= inputAmount[i];
+            //     }
+            //     reserves[_lp[i]].reserve[1] += inputAmount[i] * relativeTokenUpperLimit[reserveAddr[1]] / totalTokenInVaults[1];
+            //     relativeTokenUpperLimit[reserveAddr[1]] += inputAmount[i] * relativeTokenUpperLimit[reserveAddr[1]] / totalTokenInVaults[1];
+            //     reserves[_lp[i]].reserve[0] -= outputAmount[i] * relativeTokenUpperLimit[reserveAddr[0]] / totalTokenInVaults[0];
+            //     relativeTokenUpperLimit[reserveAddr[0]] -= outputAmount[i] * relativeTokenUpperLimit[reserveAddr[0]] / totalTokenInVaults[0];
+            // }
 
             emit XUnionExchange(_exVaults.tokens[i], _exVaults.tokens[i+1], inputAmount[i], outputAmount[i]);  
         }
@@ -296,6 +298,30 @@ contract xUnionSwapVaults{
         return outputAmount[_exVaults.tokens.length-2];
         // xUnionSwapCore(core).afterSwap2(_exVaults,a,b);
         
+    }
+
+    function amountToReserves(address token, address _lp, uint inputAmount, uint outputAmount, uint i) internal {
+        uint[2] memory totalTokenInVaults;
+        address[2] memory reserveAddr;// = getLpPair( _lp) ;
+        totalTokenInVaults = getLpTokenSum( _lp);
+        reserveAddr = getLpPair( _lp) ;
+        if(getLpInputTokenSlot(_lp,token)){
+            if(i==0){
+                totalTokenInVaults[0] -= inputAmount;
+            }
+            reserves[_lp].reserve[0] += inputAmount * relativeTokenUpperLimit[reserveAddr[0]] / totalTokenInVaults[0];
+            relativeTokenUpperLimit[reserveAddr[0]] += inputAmount * relativeTokenUpperLimit[reserveAddr[0]] / totalTokenInVaults[0];
+            reserves[_lp].reserve[1] -= outputAmount * relativeTokenUpperLimit[reserveAddr[1]] / totalTokenInVaults[1];
+            relativeTokenUpperLimit[reserveAddr[1]] -= outputAmount * relativeTokenUpperLimit[reserveAddr[1]] / totalTokenInVaults[1];
+        }else{
+            if(i==0){
+                totalTokenInVaults[1] -= inputAmount;
+            }
+            reserves[_lp].reserve[1] += inputAmount * relativeTokenUpperLimit[reserveAddr[1]] / totalTokenInVaults[1];
+            relativeTokenUpperLimit[reserveAddr[1]] += inputAmount * relativeTokenUpperLimit[reserveAddr[1]] / totalTokenInVaults[1];
+            reserves[_lp].reserve[0] -= outputAmount * relativeTokenUpperLimit[reserveAddr[0]] / totalTokenInVaults[0];
+            relativeTokenUpperLimit[reserveAddr[0]] -= outputAmount * relativeTokenUpperLimit[reserveAddr[0]] / totalTokenInVaults[0];
+        }
     }
 
     // ======================== contract base methods =====================
