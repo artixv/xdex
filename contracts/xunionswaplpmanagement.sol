@@ -124,7 +124,7 @@ contract xUnionSwapLpManager{
                     _amountActual[0] = _amountEstimated[0];
                 }
             }
-            
+            ixVaults(xVaults).lpSettings(_lp, 30, 0);
             ixVaults(xVaults).creatLpVault(_lp,assetAddr,category);//
         }else{// Subsequent LP addition, Lp will transfer to msg.sender; 
             _amountActual[0] = _amountEstimated[1]*reserve[0]/reserve[1];

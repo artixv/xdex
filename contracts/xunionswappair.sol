@@ -5,6 +5,8 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./libraries/structlibrary.sol";
 import "./interfaces/ixvaults.sol";
+import "./interfaces/iRewardMini.sol";
+
 contract xUnionSwapPair is ERC20 {
     
     //----------------------Persistent Variables ----------------------
@@ -19,7 +21,7 @@ contract xUnionSwapPair is ERC20 {
     address public vaults;
     address public slc;
     address public lpManager;
-
+    address public rewardContract;
     //--------------------------for permit use-----------------------------
 
     bytes32 public DOMAIN_SEPARATOR;
@@ -65,12 +67,18 @@ contract xUnionSwapPair is ERC20 {
     // called once by the factory at time of deployment
     // lpCategory = 1 -> Base
     // lpCategory = 2 -> Expand
-    function initialize(address _token0,address _token1,address _vaults,address _slc,address _lpManager) external {
+    function initialize(address _token0,
+                        address _token1,
+                        address _vaults,
+                        address _slc,
+                        address _lpManager,
+                        address _rewardContract) external {
         require(msg.sender == factory, 'X SWAP Pair: FORBIDDEN'); // sufficient check
         token0 = _token0;
         token1 = _token1;
         vaults = _vaults;
         lpManager = _lpManager;
+        rewardContract = _rewardContract;
         if(_token0 == _slc){
             lpCategory = 1;
         }else if(_token1 == _slc){
@@ -89,6 +97,9 @@ contract xUnionSwapPair is ERC20 {
         require(msg.sender == factory, 'X SWAP Pair: FORBIDDEN'); // sufficient check
         vaults = _vaults;
         lpManager = _lpManager;
+    }
+    function rewardContractSetup(address _rewardContract) public {
+        rewardContract = _rewardContract;
     }
 
     // --------------------- Mint&Burn function ---------------------
@@ -125,6 +136,15 @@ contract xUnionSwapPair is ERC20 {
         address recoveredAddress = ecrecover(digest, v, r, s);
         require(recoveredAddress != address(0) && recoveredAddress == owner, 'X SWAP Pair: INVALID_SIGNATURE');
         _approve(owner, spender, value);
+    }
+
+    function _afterTokenTransfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal virtual override {
+        iRewardMini(rewardContract).recordUpdate(from,balanceOf(from));
+        iRewardMini(rewardContract).recordUpdate(to,balanceOf(to));
     }
 
 }

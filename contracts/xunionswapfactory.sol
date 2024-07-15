@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import './xunionswappair.sol';
 import "./libraries/structlibrary.sol";
+import "./interfaces/iRewardMini.sol";
 
 contract xUnionSwapFactory  {
     //----------------------Persistent Variables ----------------------
@@ -12,6 +13,8 @@ contract xUnionSwapFactory  {
     address public vaults;//All states are stored in the vault
     address public slc;// Super Libra Coin
     address public lpManager;
+    address public rewardContract;
+    uint    public rewardType;
     mapping(address => mapping(address => address)) public getPair;
     mapping(address => address) public getCoinToStableLpPair;
     mapping(address => structlibrary.reserve) public lpdetails;
@@ -57,7 +60,7 @@ contract xUnionSwapFactory  {
         bytes32 _salt = keccak256(abi.encodePacked(token0, token1));
         //Only ERC20 Tokens Can creat pairs
         pair = address(new xUnionSwapPair{salt: _salt}(strConcat(strConcat(string(ERC20(token0).symbol()),"&"),strConcat(string(ERC20(token1).symbol()), " Liquidity Provider")),strConcat(strConcat(string(ERC20(tokenA).symbol()),"&"),strConcat(string(ERC20(tokenB).symbol()), " LP"))));  //
-        xUnionSwapPair(pair).initialize(token0,token1,vaults,slc,lpManager);
+        xUnionSwapPair(pair).initialize(token0, token1, vaults, slc, lpManager, rewardContract);
         getPair[token0][token1] = pair;
         getPair[token1][token0] = pair; // populate mapping in the reverse direction
         lpdetails[pair].assetAddr[0] =  token0;
@@ -72,8 +75,15 @@ contract xUnionSwapFactory  {
             }
         }
 
+        iRewardMini(rewardContract).factoryUsedRegist(pair, rewardType);
+
         emit PairCreated(token0, token1, pair, allLpPairs.length);
         emit PairCreatedX(token0, token1, pair, allLpPairs.length,lpCategory);
+    }
+
+    function lpResetup(address _rewardContract,address lpAddr) external{
+        require(msg.sender == setPermissionAddress, 'Coin Factory: Permission FORBIDDEN');
+        xUnionSwapPair(lpAddr).rewardContractSetup(_rewardContract);
     }
 
     function strConcat(string memory _str1, string memory _str2) internal pure returns (string memory) {
@@ -84,13 +94,20 @@ contract xUnionSwapFactory  {
     }
 
     //--------------------------- Setup functions --------------------------
+    function rewardTypeSetup(uint _rewardType) external{
+        require(msg.sender == setPermissionAddress, 'X Swap Factory: Permission FORBIDDEN');
+        rewardType = _rewardType;
+    }
 
-
-    function settings(address _vault,address _slc,address _lpManager) external {
+    function settings(address _vault,
+                      address _slc,
+                      address _lpManager,
+                      address _rewardContract) external {
         require(msg.sender == setPermissionAddress, 'X Swap Factory: Permission FORBIDDEN');
         vaults = _vault;
         slc = _slc;
         lpManager = _lpManager;
+        rewardContract = _rewardContract;
     }
 
     function setPA(address _setPermissionAddress) external {
