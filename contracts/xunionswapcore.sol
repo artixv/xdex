@@ -278,8 +278,5 @@ contract xUnionSwapCore{
     function afterSwap2(structlibrary.exVaults memory _exVaults,uint a,uint b) public  {
 
     }
-
-    function afterSwap3(structlibrary.exVaults memory _exVaults,uint a,uint b) public  {}
-
     
 }

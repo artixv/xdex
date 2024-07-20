@@ -234,7 +234,7 @@ contract xUnionSwapVaults{
     }
 
     function exchange(structlibrary.exVaults memory _exVaults,uint deadline) public lock returns(uint){
-        if(xInterface[msg.sender]){
+        if(xInterface[msg.sender] == false){
             require(latestBlockNumber < block.number,"X Swap Vaults: Same block can't have Two exchange");
         }
         latestBlockNumber = block.number;
