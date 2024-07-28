@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Business Source License 1.1
-// First Release Time : 2024.06.30
+// First Release Time : 2024.07.30
 /* Function:
 1. Operate the casting and destruction of LP;
 2. Inject the corresponding currency and quantity into the vault while destroying the LP casting;
