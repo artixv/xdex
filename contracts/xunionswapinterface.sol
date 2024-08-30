@@ -72,6 +72,16 @@ contract xUnionSwapUserInterface{
     //   3. Exchange : interact with vaults
     //   4. Redemption of initial LP : interaction with LPvaults
 
+    // CreatePair and Subscribe init amount
+    function createLpAndSubscribeInitLiq(address tokenA,
+                                         address tokenB,
+                                         uint[2] memory _amountEstimated) 
+                                         public 
+                                         returns(uint[2] memory _amountActual,uint _amountLp){
+        address _lp = iXunionFactory(xfactory).createPair(tokenA, tokenB);
+        return xLpSubscribe2(_lp, _amountEstimated);
+    }
+
     // factory
     function createPair(address tokenA,address tokenB) public returns (address) {
        return iXunionFactory(xfactory).createPair(tokenA, tokenB);
@@ -163,6 +173,15 @@ contract xUnionSwapUserInterface{
         IERC20(TokensAddr[0]).transfer(msg.sender,IERC20(TokensAddr[0]).balanceOf(address(this)));
         IERC20(TokensAddr[1]).transfer(msg.sender,IERC20(TokensAddr[1]).balanceOf(address(this)));
     }
+    // internal
+    // function ifHaveTransferFee(address _token,uint sumOld,uint amount) internal view returns(uint percentLeftover){
+    //     if(IERC20(_token).balanceOf(address(this)) >= sumOld + amount){
+    //         return 10000;
+    //     }else{
+    //         return 10000 * IERC20(_token).balanceOf(address(this)) / (sumOld + amount);
+
+    //     }
+    // }
     // vaults
     function xexchange(address[] memory tokens,uint amountIn,uint amountOut,uint limits,uint deadline) public returns(uint output) {
         require(UserLatestBlockNumber[msg.sender] < block.number,"X SWAP Interface: Cant Have Two exchange in one Block");
@@ -260,6 +279,7 @@ contract xUnionSwapUserInterface{
 
     // lp vaults
     function initialLpRedeem(address _lp) public returns(uint _amount) {
+        require(initialLpOwner[_lp] == msg.sender,"X SWAP Interface: msg.sender is NOT the initial LP owner");
         _amount = ixLpVaults(xlpvaults).initialLpRedeem(_lp);
         IERC20(_lp).transfer(msg.sender,IERC20(_lp).balanceOf(address(this)));
     }

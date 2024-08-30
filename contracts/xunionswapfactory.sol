@@ -24,11 +24,20 @@ contract xUnionSwapFactory  {
     constructor(address _setPermissionAddress) {
         setPermissionAddress = _setPermissionAddress;
     }
+    //----------------------------modifier ----------------------------
+    modifier onlyPermissionAddress() {
+        require(setPermissionAddress == msg.sender, 'Coin Factory: Permission FORBIDDEN');
+        _;
+    }
 
     //----------------------------- event -----------------------------
     event PairCreated(address indexed token0, address indexed token1, address pair, uint);
     event PairCreatedX(address indexed token0, address indexed token1, address pair, uint sortPosition,uint8 category);
     //----------------------------- functions -----------------------------
+        
+    function name(address token) public view returns (string memory) {
+        return string(ERC20(token).name());
+    }
     function allLpPairsLength() external view returns (uint) {
         return (allLpPairs.length);
     }
@@ -81,37 +90,33 @@ contract xUnionSwapFactory  {
         emit PairCreatedX(token0, token1, pair, allLpPairs.length,lpCategory);
     }
 
-    function lpResetup(address _rewardContract,address lpAddr) external{
-        require(msg.sender == setPermissionAddress, 'Coin Factory: Permission FORBIDDEN');
-        xUnionSwapPair(lpAddr).rewardContractSetup(_rewardContract);
-    }
+    //--------------------------- Internal functions --------------------------
 
     function strConcat(string memory _str1, string memory _str2) internal pure returns (string memory) {
         return string(abi.encodePacked(_str1, _str2));
     }
-    function name(address token) public view returns (string memory) {
-        return string(ERC20(token).name());
-    }
 
     //--------------------------- Setup functions --------------------------
-    function rewardTypeSetup(uint _rewardType) external{
-        require(msg.sender == setPermissionAddress, 'X Swap Factory: Permission FORBIDDEN');
+    
+    function lpResetup(address _rewardContract,address lpAddr) external onlyPermissionAddress{
+        xUnionSwapPair(lpAddr).rewardContractSetup(_rewardContract);
+    }
+
+    function rewardTypeSetup(uint _rewardType) external onlyPermissionAddress{
         rewardType = _rewardType;
     }
 
     function settings(address _vault,
                       address _slc,
                       address _lpManager,
-                      address _rewardContract) external {
-        require(msg.sender == setPermissionAddress, 'X Swap Factory: Permission FORBIDDEN');
+                      address _rewardContract) external onlyPermissionAddress{
         vaults = _vault;
         slc = _slc;
         lpManager = _lpManager;
         rewardContract = _rewardContract;
     }
 
-    function setPA(address _setPermissionAddress) external {
-        require(msg.sender == setPermissionAddress, 'X Swap Factory: Permission FORBIDDEN');
+    function setPA(address _setPermissionAddress) external onlyPermissionAddress{
         newPermissionAddress = _setPermissionAddress;
     }
     function acceptPA(bool _TorF) external {
@@ -121,8 +126,7 @@ contract xUnionSwapFactory  {
         }
         newPermissionAddress = address(0);
     }
-    function resetuplp(address _lp,address _vaults,address _lpManager) external {
-        require(msg.sender == setPermissionAddress, 'X Swap Factory: Permission FORBIDDEN');
+    function resetuplp(address _lp,address _vaults,address _lpManager) external onlyPermissionAddress{
         xUnionSwapPair(_lp).resetup( _vaults, _lpManager);
     }
 

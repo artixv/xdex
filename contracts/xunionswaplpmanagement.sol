@@ -38,7 +38,7 @@ contract xUnionSwapLpManager{
         unlocked = 1;
     }
     modifier onlyPermissionAddress() {
-        require(setPermissionAddress == msg.sender, 'X Swap LpManager: Permission FORBIDDENe');
+        require(setPermissionAddress == msg.sender, 'X Swap LpManager: Permission FORBIDDEN');
         _;
     }
     //----------------------------- event -----------------------------
@@ -60,8 +60,7 @@ contract xUnionSwapLpManager{
          ixVaults(xVaults).lpSettings(_lp, _balanceFee, _a0) ;
          emit LpInfoSettings( _lp, _balanceFee, _a0);
     }
-    function setPA(address _setPermissionAddress) external {
-        require(msg.sender == _setPermissionAddress, 'X Swap LpManager: Permission FORBIDDEN');
+    function setPA(address _setPermissionAddress) external onlyPermissionAddress{
         newPermissionAddress = _setPermissionAddress;
     }
     function acceptPA(bool _TorF) external {
@@ -176,10 +175,27 @@ contract xUnionSwapLpManager{
         IERC20(assetAddr[0]).transferFrom(xVaults,msg.sender,_amount[0]);
         IERC20(assetAddr[1]).transferFrom(xVaults,msg.sender,_amount[1]);
 
+        // Prevent quantity errors caused by ERC20 tokens that charge a fee for each`transfer()`or`transferFrom()`
+        // for(uint i = 0; i < 2; i++){
+        //     reserve[i] = ifHaveTransferFee(assetAddr[i],reserve[i],_amount[i]);
+        //     if(reserve[i] < 10000){
+        //         _amount[i] = _amount[i] * 10000 / reserve[i] - _amount[i] * reserve[i] / 10000;
+        //         IERC20(assetAddr[i]).transferFrom(xVaults,msg.sender,_amount[i]);
+        //     }
+        // }
+
         //here need add info change
         ixVaults(xVaults).dereaseLpAmount(_lp, _amount,_amountLp);
         emit Redeem(_lp, msg.sender, _amountLp);
     }
+    // function ifHaveTransferFee(address _token,uint sumOld,uint amount) internal view returns(uint percentLeftover){
+    //     if(IERC20(_token).balanceOf(address(this)) >= sumOld + amount){
+    //         return 10000;
+    //     }else{
+    //         return 10000 * IERC20(_token).balanceOf(address(this)) / (sumOld + amount);
+
+    //     }
+    // }
     // ======================== contract base methods =====================
     fallback() external payable {}
     receive() external payable {}

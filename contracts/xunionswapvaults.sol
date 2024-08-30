@@ -102,8 +102,8 @@ contract xUnionSwapVaults{
         reserves[_lp].assetAddr[0] = _tokens[0];
         reserves[_lp].assetAddr[1] = _tokens[1];
         reserves[_lp].category = lpCategory;
-        IERC20(_tokens[0]).approve(lpManager, 99999999999999999999999999999999999999 ether);
-        IERC20(_tokens[1]).approve(lpManager, 99999999999999999999999999999999999999 ether);
+        IERC20(_tokens[0]).approve(lpManager, type(uint256).max);
+        IERC20(_tokens[1]).approve(lpManager, type(uint256).max);
         allPairsInVault.push(_lp);
         getPair[_tokens[0]][_tokens[1]] = _lp;
         getPair[_tokens[1]][_tokens[0]] = _lp;

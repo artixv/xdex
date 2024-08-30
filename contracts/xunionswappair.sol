@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "./libraries/structlibrary.sol";
 import "./interfaces/ixvaults.sol";
 import "./interfaces/iRewardMini.sol";
@@ -94,11 +95,12 @@ contract xUnionSwapPair is ERC20 {
     //-------------------------- sys function --------------------------
 
     function resetup(address _vaults,address _lpManager) external {
-        require(msg.sender == factory, 'X SWAP Pair: FORBIDDEN'); // sufficient check
+        require(msg.sender == factory, 'X SWAP Pair: Only factory could trigger this func.'); // sufficient check
         vaults = _vaults;
         lpManager = _lpManager;
     }
     function rewardContractSetup(address _rewardContract) public {
+        require(msg.sender == factory, 'X SWAP Pair: Only factory could trigger this func.'); // sufficient check
         rewardContract = _rewardContract;
     }
 
@@ -133,7 +135,7 @@ contract xUnionSwapPair is ERC20 {
                 keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, value, nonces[owner]++, deadline))
             )
         );
-        address recoveredAddress = ecrecover(digest, v, r, s);
+        address recoveredAddress = ECDSA.recover(digest, v, r, s);
         require(recoveredAddress != address(0) && recoveredAddress == owner, 'X SWAP Pair: INVALID_SIGNATURE');
         _approve(owner, spender, value);
     }
