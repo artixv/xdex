@@ -7,7 +7,8 @@
 4. The first subscription of currency lp will be saved in lpvaults when it is created, 
    and the value of the paired lp currency needs to be no less than 1000 SLC
 */   
-pragma solidity ^0.8.0;
+pragma solidity 0.8.6;
+
 import "./libraries/structlibrary.sol";
 import "./interfaces/ixunionswappair.sol";
 import "./interfaces/ixunionfactory.sol";

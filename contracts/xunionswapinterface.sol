@@ -12,7 +12,7 @@ import "./interfaces/ixlpmanager.sol";
 import "./interfaces/ixcore.sol";
 import "./interfaces/iwxcfx.sol";
 
-pragma solidity ^0.8.0;
+pragma solidity 0.8.6;
 
 contract xUnionSwapUserInterface{
     address public xfactory;

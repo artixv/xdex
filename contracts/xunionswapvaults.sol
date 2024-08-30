@@ -7,7 +7,8 @@
 // Asset prices save the latest and old prices of the current block, 
 // restrict calls to the same block except for interface contracts to prevent general lightning loan attacks
 
-pragma solidity ^0.8.0;
+pragma solidity 0.8.6;
+
 import "./libraries/structlibrary.sol";
 import "./interfaces/ixunionswappair.sol";
 import "./interfaces/ixunionfactory.sol";

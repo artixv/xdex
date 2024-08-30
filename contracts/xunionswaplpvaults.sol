@@ -2,7 +2,7 @@
 // First Release Time : 2024.07.30
 // 保存首次mint的lp；
 
-pragma solidity ^0.8.0;
+pragma solidity 0.8.6;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./interfaces/ilpvaultinfo.sol";
