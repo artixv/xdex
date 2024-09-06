@@ -3,7 +3,8 @@
 
 // Perform redemption operations and interact with vault and core
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+// import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./interfaces/ixunionfactory.sol";
 import "./interfaces/ixvaults.sol";
 import "./interfaces/ixlpvaults.sol";
@@ -15,6 +16,8 @@ import "./interfaces/iwxcfx.sol";
 pragma solidity 0.8.6;
 
 contract xUnionSwapUserInterface{
+    using SafeERC20 for IERC20;
+
     address public xfactory;
     address public xvaults;
     address public xlpvaults;
@@ -42,20 +45,26 @@ contract xUnionSwapUserInterface{
         setter = msg.sender;
         // CFXMock = address(0x0000000000000000000000000000000000000Cf0);
     }
+    //----------------------------- event -----------------------------
+    event SystemSetup(address _factory,address _vaults,address _lpvaults,address _lpManager,address _xCore,address _wCFX);
+    event TransferLpSetter(address _set);
+    event AcceptLpSetter(bool _TorF);
     //----------------------------- ----- -----------------------------
 
     
     function systemSetup(address _factory,address _vaults,address _lpvaults,address _lpManager,address _xCore,address _wCFX) external onlyLpSetter{
-            xfactory = _factory;
-            xvaults = _vaults;
-            xlpvaults = _lpvaults;
-            xlpmanager = _lpManager;
-            xCore = _xCore;
-            wCFX = _wCFX;
+        xfactory = _factory;
+        xvaults = _vaults;
+        xlpvaults = _lpvaults;
+        xlpmanager = _lpManager;
+        xCore = _xCore;
+        wCFX = _wCFX;
+        emit SystemSetup( _factory, _vaults, _lpvaults, _lpManager, _xCore, _wCFX);
     }
 
     function transferLpSetter(address _set) external onlyLpSetter{
         newsetter = _set;
+        emit TransferLpSetter( _set);
     }
     function acceptLpSetter(bool _TorF) external {
         require(msg.sender == newsetter, 'X Swap Interface: Permission FORBIDDEN');
@@ -63,6 +72,7 @@ contract xUnionSwapUserInterface{
             setter = newsetter;
         }
         newsetter = address(0);
+        emit AcceptLpSetter(_TorF);
     }
 
     // Operation function
@@ -77,6 +87,7 @@ contract xUnionSwapUserInterface{
                                          address tokenB,
                                          uint[2] memory _amountEstimated) 
                                          public 
+                                         payable
                                          returns(uint[2] memory _amountActual,uint _amountLp){
         address _lp = iXunionFactory(xfactory).createPair(tokenA, tokenB);
         return xLpSubscribe2(_lp, _amountEstimated);
@@ -97,17 +108,17 @@ contract xUnionSwapUserInterface{
         address[2] memory TokensAddr;
         TokensAddr = getLpPair( _lp) ;
 
-        IERC20(TokensAddr[0]).transferFrom(msg.sender,address(this),_amountEstimated[0]);
-        IERC20(TokensAddr[1]).transferFrom(msg.sender,address(this),_amountEstimated[1]);
+        IERC20(TokensAddr[0]).safeTransferFrom(msg.sender,address(this),_amountEstimated[0]);
+        IERC20(TokensAddr[1]).safeTransferFrom(msg.sender,address(this),_amountEstimated[1]);
         IERC20(TokensAddr[0]).approve(xlpmanager, _amountEstimated[0]);
         IERC20(TokensAddr[1]).approve(xlpmanager, _amountEstimated[1]);
         (_amountActual,_amountLp) = ixLpManager(xlpmanager).xLpSubscribe(_lp,_amountEstimated);
-        IERC20(_lp).transfer(msg.sender,IERC20(_lp).balanceOf(address(this)));
+        IERC20(_lp).safeTransfer(msg.sender,IERC20(_lp).balanceOf(address(this)));
         if(IERC20(TokensAddr[0]).balanceOf(address(this))>0){
-            IERC20(TokensAddr[0]).transfer(msg.sender,IERC20(TokensAddr[0]).balanceOf(address(this)));
+            IERC20(TokensAddr[0]).safeTransfer(msg.sender,IERC20(TokensAddr[0]).balanceOf(address(this)));
         }
         if(IERC20(TokensAddr[1]).balanceOf(address(this))>0){
-            IERC20(TokensAddr[1]).transfer(msg.sender,IERC20(TokensAddr[1]).balanceOf(address(this)));
+            IERC20(TokensAddr[1]).safeTransfer(msg.sender,IERC20(TokensAddr[1]).balanceOf(address(this)));
         }
     }
     function xLpSubscribe2(address _lp,uint[2] memory _amountEstimated) public payable returns(uint[2] memory _amountActual,uint _amountLp) {
@@ -122,15 +133,15 @@ contract xUnionSwapUserInterface{
             iwxCFX(wCFX).deposit{value:msg.value}();
         }
         if(TokensAddr[0] != wCFX){
-            IERC20(TokensAddr[0]).transferFrom(msg.sender,address(this),_amountEstimated[0]);
+            IERC20(TokensAddr[0]).safeTransferFrom(msg.sender,address(this),_amountEstimated[0]);
         }
         if(TokensAddr[1] != wCFX){
-            IERC20(TokensAddr[1]).transferFrom(msg.sender,address(this),_amountEstimated[1]);
+            IERC20(TokensAddr[1]).safeTransferFrom(msg.sender,address(this),_amountEstimated[1]);
         }
         IERC20(TokensAddr[0]).approve(xlpmanager, _amountEstimated[0]);
         IERC20(TokensAddr[1]).approve(xlpmanager, _amountEstimated[1]);
         (_amountActual,_amountLp) = ixLpManager(xlpmanager).xLpSubscribe(_lp,_amountEstimated);
-        IERC20(_lp).transfer(msg.sender,IERC20(_lp).balanceOf(address(this)));
+        IERC20(_lp).safeTransfer(msg.sender,IERC20(_lp).balanceOf(address(this)));
         if(IERC20(wCFX).balanceOf(address(this)) > 0){
             iwxCFX(wCFX).withdraw(IERC20(wCFX).balanceOf(address(this)));
         }
@@ -140,26 +151,26 @@ contract xUnionSwapUserInterface{
             require(success,"X SWAP Interface: CFX Transfer Failed");
         }
         if(IERC20(TokensAddr[0]).balanceOf(address(this))>0){
-            IERC20(TokensAddr[0]).transfer(msg.sender,IERC20(TokensAddr[0]).balanceOf(address(this)));
+            IERC20(TokensAddr[0]).safeTransfer(msg.sender,IERC20(TokensAddr[0]).balanceOf(address(this)));
         }
         if(IERC20(TokensAddr[1]).balanceOf(address(this))>0){
-            IERC20(TokensAddr[1]).transfer(msg.sender,IERC20(TokensAddr[1]).balanceOf(address(this)));
+            IERC20(TokensAddr[1]).safeTransfer(msg.sender,IERC20(TokensAddr[1]).balanceOf(address(this)));
         }
     }
 
     function xLpRedeem(address _lp,uint _amountLp) public returns(uint[2] memory _amount) {
         address[2] memory TokensAddr;
         TokensAddr = getLpPair( _lp) ;
-        IERC20(_lp).transferFrom(msg.sender,address(this),_amountLp);
+        IERC20(_lp).safeTransferFrom(msg.sender,address(this),_amountLp);
         IERC20(_lp).approve(xlpmanager, _amountLp);
         _amount = ixLpManager(xlpmanager).xLpRedeem(_lp,_amountLp);
-        IERC20(TokensAddr[0]).transfer(msg.sender,IERC20(TokensAddr[0]).balanceOf(address(this)));
-        IERC20(TokensAddr[1]).transfer(msg.sender,IERC20(TokensAddr[1]).balanceOf(address(this)));
+        IERC20(TokensAddr[0]).safeTransfer(msg.sender,IERC20(TokensAddr[0]).balanceOf(address(this)));
+        IERC20(TokensAddr[1]).safeTransfer(msg.sender,IERC20(TokensAddr[1]).balanceOf(address(this)));
     }
     function xLpRedeem2(address _lp,uint _amountLp) public returns(uint[2] memory _amount) {
         address[2] memory TokensAddr;
         TokensAddr = getLpPair( _lp) ;
-        IERC20(_lp).transferFrom(msg.sender,address(this),_amountLp);
+        IERC20(_lp).safeTransferFrom(msg.sender,address(this),_amountLp);
         IERC20(_lp).approve(xlpmanager, _amountLp);
         _amount = ixLpManager(xlpmanager).xLpRedeem(_lp,_amountLp);
         if(IERC20(wCFX).balanceOf(address(this)) > 0){
@@ -170,8 +181,8 @@ contract xUnionSwapUserInterface{
             (bool success, ) = receiver.call{value:address(this).balance}("");
             require(success,"X SWAP Interface: CFX Transfer Failed");
         }
-        IERC20(TokensAddr[0]).transfer(msg.sender,IERC20(TokensAddr[0]).balanceOf(address(this)));
-        IERC20(TokensAddr[1]).transfer(msg.sender,IERC20(TokensAddr[1]).balanceOf(address(this)));
+        IERC20(TokensAddr[0]).safeTransfer(msg.sender,IERC20(TokensAddr[0]).balanceOf(address(this)));
+        IERC20(TokensAddr[1]).safeTransfer(msg.sender,IERC20(TokensAddr[1]).balanceOf(address(this)));
     }
     // internal
     // function ifHaveTransferFee(address _token,uint sumOld,uint amount) internal view returns(uint percentLeftover){
@@ -187,11 +198,11 @@ contract xUnionSwapUserInterface{
         require(UserLatestBlockNumber[msg.sender] < block.number,"X SWAP Interface: Cant Have Two exchange in one Block");
         UserLatestBlockNumber[msg.sender] = block.number;
         uint tokenLength = tokens.length;
-        IERC20(tokens[0]).transferFrom(msg.sender,address(this),amountIn);
+        IERC20(tokens[0]).safeTransferFrom(msg.sender,address(this),amountIn);
         IERC20(tokens[0]).approve(xvaults, amountIn);
         amountIn = IERC20(tokens[0]).balanceOf(address(this));
         output = ixVaults(xvaults).xexchange(tokens, amountIn, amountOut, limits, deadline);
-        IERC20(tokens[tokenLength-1]).transfer(msg.sender,IERC20(tokens[tokenLength-1]).balanceOf(address(this)));
+        IERC20(tokens[tokenLength-1]).safeTransfer(msg.sender,IERC20(tokens[tokenLength-1]).balanceOf(address(this)));
     }
     function xexchange2(address[] memory tokens,uint amountIn,uint amountOut,uint limits,uint deadline) public payable returns(uint output) {
         require(UserLatestBlockNumber[msg.sender] < block.number,"X SWAP Interface: Cant Have Two exchange in one Block");
@@ -200,7 +211,7 @@ contract xUnionSwapUserInterface{
         if(tokens[0]==wCFX){
             iwxCFX(wCFX).deposit{value: amountIn}();
         }else{
-            IERC20(tokens[0]).transferFrom(msg.sender,address(this),amountIn);
+            IERC20(tokens[0]).safeTransferFrom(msg.sender,address(this),amountIn);
         }
         
         IERC20(tokens[0]).approve(xvaults, amountIn);
@@ -210,7 +221,7 @@ contract xUnionSwapUserInterface{
         if(tokens[tokenLength-1] == wCFX){
             iwxCFX(wCFX).withdraw(IERC20(tokens[tokenLength-1]).balanceOf(address(this)));
         }else{
-            IERC20(tokens[tokenLength-1]).transfer(msg.sender,IERC20(tokens[tokenLength-1]).balanceOf(address(this)));
+            IERC20(tokens[tokenLength-1]).safeTransfer(msg.sender,IERC20(tokens[tokenLength-1]).balanceOf(address(this)));
         }
         if(address(this).balance>0){
             address payable receiver = payable(msg.sender); // Set receiver
@@ -281,7 +292,7 @@ contract xUnionSwapUserInterface{
     function initialLpRedeem(address _lp) public returns(uint _amount) {
         require(initialLpOwner[_lp] == msg.sender,"X SWAP Interface: msg.sender is NOT the initial LP owner");
         _amount = ixLpVaults(xlpvaults).initialLpRedeem(_lp);
-        IERC20(_lp).transfer(msg.sender,IERC20(_lp).balanceOf(address(this)));
+        IERC20(_lp).safeTransfer(msg.sender,IERC20(_lp).balanceOf(address(this)));
     }
 
     // Query function

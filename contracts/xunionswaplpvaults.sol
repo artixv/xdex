@@ -4,10 +4,13 @@
 
 pragma solidity 0.8.6;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+// import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./interfaces/ilpvaultinfo.sol";
 
 contract xUnionSwapLpVaults{
+    using SafeERC20 for IERC20;
+
     //----------------------Persistent Variables ----------------------
     address public lpManager;
     address public setter;
@@ -21,6 +24,11 @@ contract xUnionSwapLpVaults{
     }
 
     //----------------------------- event -----------------------------
+    event SystemSetup(address _lpManager);
+    event TimeLimitSetup(uint _lpTimeLimit);
+    event TransferLpSetter(address _set);
+    event AcceptLpSetter(bool _TorF);
+    event SetInitTime(address _lp,uint _timestamp);
     event InitialLpRedeem(address _lp,address reseiver,uint _amount);
 
     //-------------------------- constructor --------------------------
@@ -30,13 +38,16 @@ contract xUnionSwapLpVaults{
     }
     function systemSetup(address _lpManager) external onlyLpSetter{
             lpManager = _lpManager;
+        emit SystemSetup(_lpManager);
     }
     function timeLimitSetup(uint _lpTimeLimit) external onlyLpSetter{
             lpTimeLimit = _lpTimeLimit;
+        emit TimeLimitSetup(_lpTimeLimit);
     }
 
     function transferLpSetter(address _set) external onlyLpSetter{
         newsetter = _set;
+        emit TransferLpSetter(_set);
     }
     function acceptLpSetter(bool _TorF) external {
         require(msg.sender == newsetter, 'X Swap Lp Vaults: Permission FORBIDDEN');
@@ -44,10 +55,7 @@ contract xUnionSwapLpVaults{
             setter = newsetter;
         }
         newsetter = address(0);
-    }
-
-    function initialTimeLimit(address _lpManager) external onlyLpSetter{
-            lpManager = _lpManager;
+        emit AcceptLpSetter(_TorF);
     }
 
     function exceptionTransfer(address recipient) external onlyLpSetter{
@@ -65,7 +73,7 @@ contract xUnionSwapLpVaults{
         require(lpManager == msg.sender,"X SWAP Lp Vaults: msg.sender is NOT the lpManager");
         require(lpInitTime[_lp] == 0,"X SWAP Lp Vaults: lpInitTime have been Initialized ");
         lpInitTime[_lp] = block.timestamp;
-
+        emit SetInitTime(_lp,block.timestamp);
     }
     
     function initialLpRedeem(address _lp) external returns(uint _amount){
@@ -73,7 +81,7 @@ contract xUnionSwapLpVaults{
         require(iLpVaultInfo(lpManager).initialLpOwner(_lp) == msg.sender,"X SWAP Lp Vaults: msg.sender is NOT the initial LP owner");
         require(IERC20(_lp).balanceOf(address(this))==IERC20(_lp).totalSupply(),"X SWAP Lp Vaults: Other liquidity must be fully redeemed");
         _amount = iLpVaultInfo(lpManager).initLpAmount(_lp);
-        IERC20(_lp).transfer(msg.sender,_amount);
+        IERC20(_lp).safeTransfer(msg.sender,_amount);
         emit InitialLpRedeem( _lp, msg.sender, _amount);
     }
 
@@ -82,7 +90,7 @@ contract xUnionSwapLpVaults{
         require(iLpVaultInfo(lpManager).initialLpOwner(_lp) == msg.sender,"X SWAP Lp Vaults: msg.sender is NOT the initial LP owner");
         _amount = iLpVaultInfo(lpManager).initLpAmount(_lp);
         require(IERC20(_lp).balanceOf(address(this))>=_amount,"X SWAP Lp Vaults: liquidity must be adequate");
-        IERC20(_lp).transfer(iLpVaultInfo(lpManager).initialLpOwner(_lp),_amount);
+        IERC20(_lp).safeTransfer(iLpVaultInfo(lpManager).initialLpOwner(_lp),_amount);
         emit InitialLpRedeem( _lp,iLpVaultInfo(lpManager).initialLpOwner(_lp), _amount);
     }
     // ======================== contract base methods =====================

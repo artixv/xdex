@@ -7,13 +7,16 @@ contract rewardMocker{
         uint latestTimeStamp;             
         uint userSelectedTypesAcountValue;    
     }
-    mapping(address => mapping(uint => userUpdateInfo)) public userSelectedTypesAcountInfo;
+    mapping(address => mapping(address => userUpdateInfo)) public userSelectedTypesAcountInfo;
     mapping(address => uint) public tokenOrVaultType;
 
     function recordUpdate(address _userAccount,uint _value) external returns(bool){
         // only msg.sender == record address
-        userSelectedTypesAcountInfo[_userAccount][tokenOrVaultType[msg.sender]].userSelectedTypesAcountValue = _value;
-        userSelectedTypesAcountInfo[_userAccount][tokenOrVaultType[msg.sender]].latestTimeStamp = block.timestamp;
+        if(tokenOrVaultType[msg.sender] > 0){
+            userSelectedTypesAcountInfo[_userAccount][msg.sender].userSelectedTypesAcountValue = _value;
+            userSelectedTypesAcountInfo[_userAccount][msg.sender].latestTimeStamp = block.timestamp;
+        }
+        
         return true;
     }
     function factoryUsedRegist(address _token, uint256 _type) external returns(bool){

@@ -31,6 +31,16 @@ contract xUnionSwapFactory  {
     }
 
     //----------------------------- event -----------------------------
+    event LpResetup(address indexed lpAddr, address rewardContract);
+    event RewardTypeSetup(address indexed factoryAddr, address newType);
+    event Settings( address _vault,
+                    address _slc,
+                    address _lpManager,
+                    address _rewardContract);
+    event SetPA(address newPermissionAddress);
+    event AcceptPA(bool _TorF);
+    event Resetuplp(address _lp,address _vaults,address _lpManager);
+
     event PairCreated(address indexed token0, address indexed token1, address pair, uint);
     event PairCreatedX(address indexed token0, address indexed token1, address pair, uint sortPosition,uint8 category);
     //----------------------------- functions -----------------------------
@@ -100,10 +110,12 @@ contract xUnionSwapFactory  {
     
     function lpResetup(address _rewardContract,address lpAddr) external onlyPermissionAddress{
         xUnionSwapPair(lpAddr).rewardContractSetup(_rewardContract);
+        emit LpResetup(lpAddr, rewardContract);
     }
 
     function rewardTypeSetup(uint _rewardType) external onlyPermissionAddress{
         rewardType = _rewardType;
+        emit RewardTypeSetup(address(this),  _rewardType);
     }
 
     function settings(address _vault,
@@ -114,10 +126,15 @@ contract xUnionSwapFactory  {
         slc = _slc;
         lpManager = _lpManager;
         rewardContract = _rewardContract;
+        emit Settings( _vault,
+                       _slc,
+                       _lpManager,
+                       _rewardContract);
     }
 
     function setPA(address _setPermissionAddress) external onlyPermissionAddress{
         newPermissionAddress = _setPermissionAddress;
+        emit SetPA(_setPermissionAddress);
     }
     function acceptPA(bool _TorF) external {
         require(msg.sender == newPermissionAddress, 'X Swap Factory: Permission FORBIDDEN');
@@ -125,9 +142,11 @@ contract xUnionSwapFactory  {
             setPermissionAddress = newPermissionAddress;
         }
         newPermissionAddress = address(0);
+        emit AcceptPA(_TorF);
     }
     function resetuplp(address _lp,address _vaults,address _lpManager) external onlyPermissionAddress{
         xUnionSwapPair(_lp).resetup( _vaults, _lpManager);
+        emit Resetuplp(_lp, _vaults, _lpManager);
     }
 
 }

@@ -8,13 +8,15 @@
 // restrict calls to the same block except for interface contracts to prevent general lightning loan attacks
 
 pragma solidity 0.8.6;
-
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./libraries/structlibrary.sol";
 import "./interfaces/ixunionswappair.sol";
 import "./interfaces/ixunionfactory.sol";
 import "./xunionswapcore.sol";
 
 contract xUnionSwapVaults{
+    using SafeERC20 for IERC20;
+
     //----------------------Persistent Variables ----------------------
     uint public constant MINIMUM_LIQUIDITY = 10**3;
     
@@ -62,6 +64,16 @@ contract xUnionSwapVaults{
         setter = msg.sender;
     }
     //----------------------------- event -----------------------------
+    event SystemSetup(address _slc,address _lpManager,address _factory,address _core);
+    event Interfacesetting(address _xInterface, bool _ToF);
+    event TransferLpSetter(address _set);
+    event AcceptLpSetter(bool _TorF);
+    // event ExceptionTransfer(address recipient);
+    event CreatLpVault(address _lp,address[2] _tokens,uint8 lpCategory) ;
+    event IncreaseLpAmount(address _lp,uint[2] _reserveIn,uint _lpAdd);
+    event DereaseLpAmount(address _lp,uint[2] _reserveOut,uint _lpDel);
+    event LpSettings(address _lp, uint32 _balanceFee, uint _a0) ;
+
     event XUnionExchange(address indexed inputToken, address indexed outputToken,uint inputAmount,uint outputAmount);
     //----------------------------- ----- -----------------------------
 
@@ -70,14 +82,17 @@ contract xUnionSwapVaults{
             lpManager = _lpManager;
             factory = _factory;
             core = _core;
+        emit SystemSetup(_slc, _lpManager, _factory, _core);
     }
 
     function xInterfacesetting(address _xInterface, bool _ToF)external onlyLpSetter{
         xInterface[_xInterface] = _ToF;
+        emit Interfacesetting( _xInterface, _ToF);
     }
 
     function transferLpSetter(address _set) external onlyLpSetter{
         newsetter = _set;
+        emit TransferLpSetter(_set);
     }
     function acceptLpSetter(bool _TorF) external {
         require(msg.sender == newsetter, 'X Swap Vaults: Permission FORBIDDEN');
@@ -85,6 +100,7 @@ contract xUnionSwapVaults{
             setter = newsetter;
         }
         newsetter = address(0);
+        emit AcceptLpSetter(_TorF);
     }
     function exceptionTransfer(address recipient) external onlyLpSetter{
         require(address(this).balance>0,"X Swap Vaults: Insufficient amount");
@@ -111,6 +127,7 @@ contract xUnionSwapVaults{
         if(lpCategory == 1){
             getCoinToStableLpPair[_tokens[0]]  = _lp;
         }
+        emit CreatLpVault(_lp, _tokens, lpCategory);
     }
 
     function increaseLpAmount(address _lp,uint[2] memory _reserveIn,uint _lpAdd) external onlyLpManager{
@@ -151,7 +168,7 @@ contract xUnionSwapVaults{
             relativeTokenUpperLimit[reserveAddr[1]] += _reserveIn[1] * relativeTokenUpperLimit[reserveAddr[1]] / totalTokenInVaults[1];
             reserves[_lp].totalSupply += _lpAdd;
         }
-        
+        emit IncreaseLpAmount(_lp,_reserveIn,_lpAdd);
     }
     function dereaseLpAmount(address _lp,uint[2] memory _reserveOut,uint _lpDel) external onlyLpManager{
         address[2] memory reserveAddr = getLpPair( _lp) ;
@@ -164,14 +181,16 @@ contract xUnionSwapVaults{
         relativeTokenUpperLimit[reserveAddr[0]] -= _reserveOut[0] * relativeTokenUpperLimit[reserveAddr[0]] / totalTokenInVaults[0];
         relativeTokenUpperLimit[reserveAddr[1]] -= _reserveOut[1] * relativeTokenUpperLimit[reserveAddr[1]] / totalTokenInVaults[1];
         reserves[_lp].totalSupply -= _lpDel;
+        emit DereaseLpAmount(_lp, _reserveOut, _lpDel);
     }
     function lpSettings(address _lp, uint32 _balanceFee, uint _a0) external onlyLpManager{
         require(_balanceFee <= 500,"X Swap Vaults: balance fee cant > 5%");
         reserves[_lp].balanceFee =_balanceFee;
         reserves[_lp].a0 = _a0;
+        emit LpSettings(_lp, _balanceFee, _a0) ;
     }
     function addTokenApproveToLpManager(address _token) external onlyLpManager{     
-        IERC20(_token).approve(lpManager, 99999999999999999999999999999999999999 ether);
+        IERC20(_token).approve(lpManager, type(uint256).max);
     }
     //----------------------------------------Parameters Function------------------------------
 
@@ -251,7 +270,7 @@ contract xUnionSwapVaults{
         
         require(_exVaults.tokens.length>1&&_exVaults.tokens.length<=5,"X Swap Vaults: exceed MAX path lengh:2~5");
         inputAmount[0] = IERC20(_exVaults.tokens[0]).balanceOf(address(this));
-        IERC20(_exVaults.tokens[0]).transferFrom(msg.sender,address(this),_exVaults.amountIn);
+        IERC20(_exVaults.tokens[0]).safeTransferFrom(msg.sender,address(this),_exVaults.amountIn);
         outputAmount[0] = IERC20(_exVaults.tokens[0]).balanceOf(address(this)) - inputAmount[0];
         require( outputAmount[0] > 0,"X Swap Vaults: Input need > 0");
         for(i=0;i<_exVaults.tokens.length-1;i++){
@@ -295,7 +314,7 @@ contract xUnionSwapVaults{
 
         // xUnionSwapCore(core).afterSwap(_exVaults,b);
         
-        IERC20(_exVaults.tokens[_exVaults.tokens.length-1]).transfer(msg.sender,outputAmount[_exVaults.tokens.length-2]);
+        IERC20(_exVaults.tokens[_exVaults.tokens.length-1]).safeTransfer(msg.sender,outputAmount[_exVaults.tokens.length-2]);
         return outputAmount[_exVaults.tokens.length-2];
         // xUnionSwapCore(core).afterSwap2(_exVaults,a,b);
         

@@ -8,13 +8,16 @@
    and the value of the paired lp currency needs to be no less than 1000 SLC
 */   
 pragma solidity 0.8.6;
-
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./libraries/structlibrary.sol";
 import "./interfaces/ixunionswappair.sol";
 import "./interfaces/ixunionfactory.sol";
 import "./interfaces/ixvaults.sol";
 import "./interfaces/ixlpvaults.sol";
+
 contract xUnionSwapLpManager{
+    using SafeERC20 for IERC20;
+
     //----------------------Persistent Variables ----------------------
     address public setPermissionAddress;
     address newPermissionAddress;
@@ -43,6 +46,10 @@ contract xUnionSwapLpManager{
         _;
     }
     //----------------------------- event -----------------------------
+    event Settings(address _factory,address _vault,address _lpVault);
+    event SettingMinLpLimit(uint _minLpLimit);
+    event SetPA(address _setPermissionAddress);
+    event AcceptPA(bool _TorF);
     event Subscribe(address indexed lp, address subscribeAddress, uint lpAmount);
     event Redeem(address indexed lp, address redeemAddress, uint lpAmount);
     event LpInfoSettings(address indexed lp, uint balanceFee, uint a0);
@@ -52,9 +59,11 @@ contract xUnionSwapLpManager{
         factory = _factory;
         xVaults = _vault;
         lpVault = _lpVault;
+        emit Settings(_factory, _vault, _lpVault);
     }
     function settingMinLpLimit(uint _minLpLimit) external onlyPermissionAddress{
         minLpLimit = _minLpLimit;
+        emit settingMinLpLimit( _minLpLimit);
     }
 
     function xLpInfoSettings(address _lp,uint32 _balanceFee, uint _a0) external onlyPermissionAddress{
@@ -63,6 +72,7 @@ contract xUnionSwapLpManager{
     }
     function setPA(address _setPermissionAddress) external onlyPermissionAddress{
         newPermissionAddress = _setPermissionAddress;
+        emit setPA(_setPermissionAddress);
     }
     function acceptPA(bool _TorF) external {
         require(msg.sender == newPermissionAddress, 'X Swap LpManager: Permission FORBIDDEN');
@@ -70,6 +80,7 @@ contract xUnionSwapLpManager{
             setPermissionAddress = newPermissionAddress;
         }
         newPermissionAddress = address(0);
+        emit acceptPA(_TorF);
     }
 
     function exceptionTransfer(address recipient) external onlyPermissionAddress{
@@ -141,8 +152,8 @@ contract xUnionSwapLpManager{
         totalTokenInVaults[0] = IERC20(assetAddr[0]).balanceOf(xVaults);
         totalTokenInVaults[1] = IERC20(assetAddr[1]).balanceOf(xVaults);
 
-        IERC20(assetAddr[0]).transferFrom(msg.sender,xVaults,_amountActual[0]);
-        IERC20(assetAddr[1]).transferFrom(msg.sender,xVaults,_amountActual[1]);
+        IERC20(assetAddr[0]).safeTransferFrom(msg.sender,xVaults,_amountActual[0]);
+        IERC20(assetAddr[1]).safeTransferFrom(msg.sender,xVaults,_amountActual[1]);
 
         _amountActual[0] = IERC20(assetAddr[0]).balanceOf(xVaults) - totalTokenInVaults[0];
         _amountActual[1] = IERC20(assetAddr[1]).balanceOf(xVaults) - totalTokenInVaults[1];
@@ -169,19 +180,19 @@ contract xUnionSwapLpManager{
         uint totalSupply;
         (assetAddr,category) = iXunionFactory(factory).getLpPairsDetails( _lp);
         (reserve,,totalSupply) = ixVaults(xVaults).getLpReserve( _lp);
-        IERC20(_lp).transferFrom(msg.sender,address(this),_amountLp);
+        IERC20(_lp).safeTransferFrom(msg.sender,address(this),_amountLp);
         ixUnionSwapPair(_lp).burnXLp(address(this), _amountLp);
         _amount[0] = reserve[0] * _amountLp /totalSupply;
         _amount[1] = reserve[1] * _amountLp /totalSupply;
-        IERC20(assetAddr[0]).transferFrom(xVaults,msg.sender,_amount[0]);
-        IERC20(assetAddr[1]).transferFrom(xVaults,msg.sender,_amount[1]);
+        IERC20(assetAddr[0]).safeTransferFrom(xVaults,msg.sender,_amount[0]);
+        IERC20(assetAddr[1]).safeTransferFrom(xVaults,msg.sender,_amount[1]);
 
         // Prevent quantity errors caused by ERC20 tokens that charge a fee for each`transfer()`or`transferFrom()`
         // for(uint i = 0; i < 2; i++){
         //     reserve[i] = ifHaveTransferFee(assetAddr[i],reserve[i],_amount[i]);
         //     if(reserve[i] < 10000){
         //         _amount[i] = _amount[i] * 10000 / reserve[i] - _amount[i] * reserve[i] / 10000;
-        //         IERC20(assetAddr[i]).transferFrom(xVaults,msg.sender,_amount[i]);
+        //         IERC20(assetAddr[i]).safeTransferFrom(xVaults,msg.sender,_amount[i]);
         //     }
         // }
 
