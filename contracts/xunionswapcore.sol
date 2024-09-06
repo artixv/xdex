@@ -210,7 +210,6 @@ contract xUnionSwapCore{
         uint[4] memory inputAmount;
         uint[4] memory outputAmount;
         address[] memory _lp = new address[](tokens.length);
-        uint i;
         uint[2] memory priceCumulative;
         uint[3] memory priceImpactAndFees;
 
@@ -220,7 +219,7 @@ contract xUnionSwapCore{
         
         priceImpactAndFees[1] = 10000;
         priceImpactAndFees[2] = 10000;
-        for(i=0;i<tokens.length-1;i++){
+        for(uint i=0;i<tokens.length-1;i++){
             if(i==0){
                 inputAmount[i] = outputAmount[i];
                 

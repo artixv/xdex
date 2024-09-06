@@ -32,7 +32,7 @@ contract xUnionSwapFactory  {
 
     //----------------------------- event -----------------------------
     event LpResetup(address indexed lpAddr, address rewardContract);
-    event RewardTypeSetup(address indexed factoryAddr, address newType);
+    event RewardTypeSetup(address indexed factoryAddr, uint newType);
     event Settings( address _vault,
                     address _slc,
                     address _lpManager,

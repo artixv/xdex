@@ -63,7 +63,7 @@ contract xUnionSwapLpManager{
     }
     function settingMinLpLimit(uint _minLpLimit) external onlyPermissionAddress{
         minLpLimit = _minLpLimit;
-        emit settingMinLpLimit( _minLpLimit);
+        emit SettingMinLpLimit( _minLpLimit);
     }
 
     function xLpInfoSettings(address _lp,uint32 _balanceFee, uint _a0) external onlyPermissionAddress{
@@ -72,7 +72,7 @@ contract xUnionSwapLpManager{
     }
     function setPA(address _setPermissionAddress) external onlyPermissionAddress{
         newPermissionAddress = _setPermissionAddress;
-        emit setPA(_setPermissionAddress);
+        emit SetPA(_setPermissionAddress);
     }
     function acceptPA(bool _TorF) external {
         require(msg.sender == newPermissionAddress, 'X Swap LpManager: Permission FORBIDDEN');
@@ -80,7 +80,7 @@ contract xUnionSwapLpManager{
             setPermissionAddress = newPermissionAddress;
         }
         newPermissionAddress = address(0);
-        emit acceptPA(_TorF);
+        emit AcceptPA(_TorF);
     }
 
     function exceptionTransfer(address recipient) external onlyPermissionAddress{
@@ -170,6 +170,9 @@ contract xUnionSwapLpManager{
         emit Subscribe(_lp, msg.sender, _amountLp);
         
     }
+//     uint balancebefore  =  IERC20(TokensAddr[0]).balanceof(address(this));
+//     IERC20(TokensAddr[0]).transferFrom(msg.sender,address(this),_amountEstimated[0]);
+//     require(IERC20(TokensAddr[0]).balanceof(address(this))  ==  balancebefore + _amountEstimated[0]);
 
     function xLpRedeem(address _lp,uint _amountLp) external lock returns(uint[2] memory _amount){
         require(_lp != address(0),"X SWAP LpManager: _lp can't be address(0) ");
