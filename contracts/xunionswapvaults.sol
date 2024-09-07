@@ -68,7 +68,7 @@ contract xUnionSwapVaults{
     event Interfacesetting(address _xInterface, bool _ToF);
     event TransferLpSetter(address _set);
     event AcceptLpSetter(bool _TorF);
-    // event ExceptionTransfer(address recipient);
+
     event CreatLpVault(address _lp,address[2] _tokens,uint8 lpCategory) ;
     event IncreaseLpAmount(address _lp,uint[2] _reserveIn,uint _lpAdd);
     event DereaseLpAmount(address _lp,uint[2] _reserveOut,uint _lpDel);

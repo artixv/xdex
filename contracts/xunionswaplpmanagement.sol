@@ -155,8 +155,8 @@ contract xUnionSwapLpManager{
         IERC20(assetAddr[0]).safeTransferFrom(msg.sender,xVaults,_amountActual[0]);
         IERC20(assetAddr[1]).safeTransferFrom(msg.sender,xVaults,_amountActual[1]);
 
-        _amountActual[0] = IERC20(assetAddr[0]).balanceOf(xVaults) - totalTokenInVaults[0];
-        _amountActual[1] = IERC20(assetAddr[1]).balanceOf(xVaults) - totalTokenInVaults[1];
+        require(_amountActual[0] == IERC20(assetAddr[0]).balanceOf(xVaults) - totalTokenInVaults[0],"X SWAP LpManager: Cannot compatible with tokens with transaction fees");
+        require(_amountActual[1] == IERC20(assetAddr[1]).balanceOf(xVaults) - totalTokenInVaults[1],"X SWAP LpManager: Cannot compatible with tokens with transaction fees");
 
         ixVaults(xVaults).increaseLpAmount(_lp, _amountActual,_amountLp);
         
@@ -170,9 +170,6 @@ contract xUnionSwapLpManager{
         emit Subscribe(_lp, msg.sender, _amountLp);
         
     }
-//     uint balancebefore  =  IERC20(TokensAddr[0]).balanceof(address(this));
-//     IERC20(TokensAddr[0]).transferFrom(msg.sender,address(this),_amountEstimated[0]);
-//     require(IERC20(TokensAddr[0]).balanceof(address(this))  ==  balancebefore + _amountEstimated[0]);
 
     function xLpRedeem(address _lp,uint _amountLp) external lock returns(uint[2] memory _amount){
         require(_lp != address(0),"X SWAP LpManager: _lp can't be address(0) ");
@@ -190,27 +187,13 @@ contract xUnionSwapLpManager{
         IERC20(assetAddr[0]).safeTransferFrom(xVaults,msg.sender,_amount[0]);
         IERC20(assetAddr[1]).safeTransferFrom(xVaults,msg.sender,_amount[1]);
 
-        // Prevent quantity errors caused by ERC20 tokens that charge a fee for each`transfer()`or`transferFrom()`
-        // for(uint i = 0; i < 2; i++){
-        //     reserve[i] = ifHaveTransferFee(assetAddr[i],reserve[i],_amount[i]);
-        //     if(reserve[i] < 10000){
-        //         _amount[i] = _amount[i] * 10000 / reserve[i] - _amount[i] * reserve[i] / 10000;
-        //         IERC20(assetAddr[i]).safeTransferFrom(xVaults,msg.sender,_amount[i]);
-        //     }
-        // }
+        require(reserve[0] == IERC20(assetAddr[0]).balanceOf(xVaults) + _amount[0],"X SWAP LpManager: Cannot compatible with tokens with transaction fees");
+        require(reserve[1] == IERC20(assetAddr[1]).balanceOf(xVaults) + _amount[1],"X SWAP LpManager: Cannot compatible with tokens with transaction fees");
 
         //here need add info change
         ixVaults(xVaults).dereaseLpAmount(_lp, _amount,_amountLp);
         emit Redeem(_lp, msg.sender, _amountLp);
     }
-    // function ifHaveTransferFee(address _token,uint sumOld,uint amount) internal view returns(uint percentLeftover){
-    //     if(IERC20(_token).balanceOf(address(this)) >= sumOld + amount){
-    //         return 10000;
-    //     }else{
-    //         return 10000 * IERC20(_token).balanceOf(address(this)) / (sumOld + amount);
-
-    //     }
-    // }
     // ======================== contract base methods =====================
     fallback() external payable {}
     receive() external payable {}
