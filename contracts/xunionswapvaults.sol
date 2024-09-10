@@ -263,14 +263,15 @@ contract xUnionSwapVaults{
         uint[4] memory inputAmount;
         uint[4] memory outputAmount;
         uint[2] memory tempReserve;
-        address[] memory _lp = new address[](_exVaults.tokens.length);
+        uint tokenLength = _exVaults.tokens.length;
+        address[] memory _lp = new address[](tokenLength);
 
-        require(_exVaults.tokens.length>1&&_exVaults.tokens.length<=5,"X Swap Vaults: exceed MAX path lengh:2~5");
+        require(tokenLength>1&&tokenLength<=5,"X Swap Vaults: exceed MAX path lengh:2~5");
         inputAmount[0] = IERC20(_exVaults.tokens[0]).balanceOf(address(this));
         IERC20(_exVaults.tokens[0]).safeTransferFrom(msg.sender,address(this),_exVaults.amountIn);
         outputAmount[0] = IERC20(_exVaults.tokens[0]).balanceOf(address(this)) - inputAmount[0];
         require( outputAmount[0] > 0,"X Swap Vaults: Input need > 0");
-        for(uint i=0;i<_exVaults.tokens.length-1;i++){
+        for(uint i=0;i<tokenLength-1;i++){
             if(i==0){
                 inputAmount[i] = outputAmount[i];
             }else{
@@ -284,16 +285,16 @@ contract xUnionSwapVaults{
 
             emit XUnionExchange(_exVaults.tokens[i], _exVaults.tokens[i+1], inputAmount[i], outputAmount[i]);  
         }
-        if(outputAmount[_exVaults.tokens.length-2] >= _exVaults.amountOut){
-            require(outputAmount[_exVaults.tokens.length-2] <= _exVaults.amountOut + _exVaults.Limits,"X Swap Vaults: exceed user setting Limits");
+        if(outputAmount[tokenLength-2] >= _exVaults.amountOut){
+            require(outputAmount[tokenLength-2] <= _exVaults.amountOut + _exVaults.Limits,"X Swap Vaults: exceed user setting Limits");
         }else{
-            require(outputAmount[_exVaults.tokens.length-2] + _exVaults.Limits >= _exVaults.amountOut,"X Swap Vaults: exceed user setting Limits");
+            require(outputAmount[tokenLength-2] + _exVaults.Limits >= _exVaults.amountOut,"X Swap Vaults: exceed user setting Limits");
         }
 
         // xUnionSwapCore(core).afterSwap(_exVaults,b);
         
-        IERC20(_exVaults.tokens[_exVaults.tokens.length-1]).safeTransfer(msg.sender,outputAmount[_exVaults.tokens.length-2]);
-        return outputAmount[_exVaults.tokens.length-2];
+        IERC20(_exVaults.tokens[tokenLength-1]).safeTransfer(msg.sender,outputAmount[tokenLength-2]);
+        return outputAmount[tokenLength-2];
         // xUnionSwapCore(core).afterSwap2(_exVaults,a,b);
         
     }

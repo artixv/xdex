@@ -207,19 +207,20 @@ contract xUnionSwapCore{
 
     // vaults :: for exchange estimate
     function xExchangeEstimateInput(address[] memory tokens,uint amountIn) internal view returns(uint output) {
+        uint tokensLength = tokens.length;
         uint[4] memory inputAmount;
         uint[4] memory outputAmount;
-        address[] memory _lp = new address[](tokens.length);
+        address[] memory _lp = new address[](tokensLength);
         uint[2] memory priceCumulative;
         uint[3] memory priceImpactAndFees;
 
-        require(tokens.length>1&&tokens.length<=5,"X CORE: exceed MAX path lengh:2~5");
+        require(tokensLength>1&&tokensLength<=5,"X CORE: exceed MAX path lengh:2~5");
         outputAmount[0] = amountIn;
         require( outputAmount[0] > 0,"X CORE: Input need > 0");
         
         priceImpactAndFees[1] = 10000;
         priceImpactAndFees[2] = 10000;
-        for(uint i=0;i<tokens.length-1;i++){
+        for(uint i=0;i<tokensLength-1;i++){
             if(i==0){
                 inputAmount[i] = outputAmount[i];
                 
@@ -236,7 +237,7 @@ contract xUnionSwapCore{
             priceImpactAndFees[1] = priceImpactAndFees[1] * priceCumulative[0] / priceCumulative[1];
             priceImpactAndFees[2] = priceImpactAndFees[2] * ixVaults(vaults).getLpPrice(_lp[i]) / 1 ether;
             }
-        output = outputAmount[tokens.length-2];
+        output = outputAmount[tokensLength-2];
     }
 
 

@@ -231,18 +231,19 @@ contract xUnionSwapUserInterface{
     }
     // vaults :: for exchange estimate
     function xExchangeEstimateInput(address[] memory tokens,uint amountIn) external  view returns(uint output, uint[3] memory priceImpactAndFees, uint b) {
+        uint tokenLength = tokens.length;
         uint[4] memory inputAmount;
         uint[4] memory outputAmount;
-        address[] memory _lp = new address[](tokens.length);
+        address[] memory _lp = new address[](tokenLength);
         uint[2] memory priceCumulative;
 
-        require(tokens.length>1&&tokens.length<=5,"X SWAP Interface: exceed MAX path lengh:2~5");
+        require(tokenLength>1&&tokenLength<=5,"X SWAP Interface: exceed MAX path lengh:2~5");
         outputAmount[0] = amountIn;
         require( outputAmount[0] > 0,"X SWAP Interface: Input need > 0");
         
         priceImpactAndFees[1] = 10000;
         priceImpactAndFees[2] = 10000;
-        for(uint i=0;i<tokens.length-1;i++){
+        for(uint i=0;i<tokenLength-1;i++){
             if(i==0){
                 inputAmount[i] = outputAmount[i];
                 
@@ -259,22 +260,23 @@ contract xUnionSwapUserInterface{
             priceImpactAndFees[1] = priceImpactAndFees[1] * priceCumulative[0] / priceCumulative[1];
             priceImpactAndFees[2] = priceImpactAndFees[2] * getLpPrice(_lp[i]) / 1 ether;
             }
-        output = outputAmount[tokens.length-2];
+        output = outputAmount[tokenLength-2];
     }
     function xExchangeEstimateOutput(address[] memory tokens,uint amountOut) external view returns(uint input, uint[3] memory priceImpactAndFees, uint b) {
+        uint tokenLength = tokens.length;
         uint[5] memory inputAmount;
         uint[5] memory outputAmount;
-        address[] memory _lp = new address[](tokens.length);
+        address[] memory _lp = new address[](tokenLength);
         uint i;
         uint[2] memory priceCumulative;
 
-        require(tokens.length>1&&tokens.length<=5,"X SWAP Interface: exceed MAX path lengh:2~5");
-        outputAmount[tokens.length-1] = amountOut;
+        require(tokenLength>1&&tokenLength<=5,"X SWAP Interface: exceed MAX path lengh:2~5");
+        outputAmount[tokenLength-1] = amountOut;
         require( amountOut > 0,"X SWAP Interface: Input need > 0");
 
         priceImpactAndFees[1] = 10000;
         priceImpactAndFees[2] = 10000;
-        for(i=tokens.length-1;i>0;i--){
+        for(i=tokenLength-1;i>0;i--){
             _lp[i]=iXunionFactory(xfactory).getPair(tokens[i], tokens[i-1]);
             (input,) = getLpSettings(_lp[i]);// public view returns(uint32 balanceFee, uint a0);
             priceImpactAndFees[0] += input;
