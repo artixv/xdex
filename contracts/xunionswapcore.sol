@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Business Source License 1.1
-// First Release Time : 2024.07.30
+// First Release Time : 2024.09.30
 pragma solidity 0.8.6;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./libraries/structlibrary.sol";
@@ -10,13 +10,13 @@ import "./interfaces/ixvaults.sol";
 contract xUnionSwapCore{
 
     address public vaults;
-    address public riskMitigationFund;
-    address public slcaddr;
+    // address public riskMitigationFund;
+    // address public slcaddr;
 
-    constructor(address _vaults, address _riskMitigationFund, address _slcaddr) {
+    constructor(address _vaults) {
         vaults = _vaults;
-        riskMitigationFund = _riskMitigationFund;
-        slcaddr = _slcaddr;
+        // riskMitigationFund = _riskMitigationFund;
+        // slcaddr = _slcaddr;
     }
 
     //-----------------------------------------------------------------

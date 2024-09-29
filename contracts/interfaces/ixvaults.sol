@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Business Source License 1.1
-// First Release Time : 2024.07.30
+// First Release Time : 2024.09.30
 
 pragma solidity 0.8.6;
 interface ixVaults{
@@ -9,6 +9,8 @@ interface ixVaults{
     function getLpReserve(address _lp) external view returns (uint[2] memory ,uint[2] memory, uint);
     function getLpPair(address _lp) external view returns (address[2] memory);
     function getLpSettings(address _lp) external view returns(uint32 balanceFee, uint a0);
+
+    function addTokenApproveToLpManager(address _token) external ;
 
     function creatLpVault(address _lp,address[2] memory _tokens,uint8 lpCategory) external;
     function increaseLpAmount(address _lp,uint[2] memory _reserveIn,uint _lpAdd) external;

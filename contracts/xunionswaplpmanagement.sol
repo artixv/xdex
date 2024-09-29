@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Business Source License 1.1
-// First Release Time : 2024.07.30
+// First Release Time : 2024.09.30
 /* Function:
 1. Operate the casting and destruction of LP;
 2. Inject the corresponding currency and quantity into the vault while destroying the LP casting;
@@ -83,6 +83,10 @@ contract xUnionSwapLpManager{
         emit AcceptPA(_TorF);
     }
 
+    function addTokenApproveToLpManager(address _token) external onlyPermissionAddress{
+       ixVaults(xVaults).addTokenApproveToLpManager(_token);
+    }
+
     function exceptionTransfer(address recipient) external onlyPermissionAddress{
         require(address(this).balance>0,"X Swap LpManager: Insufficient amount");
         transferCFX(recipient,address(this).balance);
@@ -114,7 +118,7 @@ contract xUnionSwapLpManager{
             require(reserve[1]==0,"X SWAP LpManager: two reserve MUST be ZERO");//first Lp, need a 1000 xusd amount
             if(category==1){
                 require(_amountEstimated[1] >= minLpLimit * 1 ether,"X SWAP LpManager: First Lp need init SLC");
-                require(_amountEstimated[0] >= 1000000000,"X SWAP LpManager: Cant Be a too small amount");
+                require(_amountEstimated[0] >= 1000000,"X SWAP LpManager: Cant Be a too small amount");
                 _amountLp = _amountEstimated[1];
                 _amountActual[0] = _amountEstimated[0];
                 _amountActual[1] = _amountEstimated[1];
@@ -184,11 +188,12 @@ contract xUnionSwapLpManager{
         ixUnionSwapPair(_lp).burnXLp(address(this), _amountLp);
         _amount[0] = reserve[0] * _amountLp /totalSupply;
         _amount[1] = reserve[1] * _amountLp /totalSupply;
+        
         IERC20(assetAddr[0]).safeTransferFrom(xVaults,msg.sender,_amount[0]);
         IERC20(assetAddr[1]).safeTransferFrom(xVaults,msg.sender,_amount[1]);
-
-        require(reserve[0] == IERC20(assetAddr[0]).balanceOf(xVaults) + _amount[0],"X SWAP LpManager: Cannot compatible with tokens with transaction fees");
-        require(reserve[1] == IERC20(assetAddr[1]).balanceOf(xVaults) + _amount[1],"X SWAP LpManager: Cannot compatible with tokens with transaction fees");
+        // resolved when Subscribe liquility, so here can omit this
+        // require(reserve[0] == IERC20(assetAddr[0]).balanceOf(xVaults) + _amount[0],"X SWAP LpManager: Cannot compatible with tokens with transaction fees");
+        // require(reserve[1] == IERC20(assetAddr[1]).balanceOf(xVaults) + _amount[1],"X SWAP LpManager: Cannot compatible with tokens with transaction fees");
 
         //here need add info change
         ixVaults(xVaults).dereaseLpAmount(_lp, _amount,_amountLp);
