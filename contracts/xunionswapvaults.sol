@@ -267,6 +267,7 @@ contract xUnionSwapVaults{
         address[] memory _lp = new address[](tokenLength);
 
         require(tokenLength>1&&tokenLength<=5,"X Swap Vaults: exceed MAX path lengh:2~5");
+        require(_exVaults.tokens[0]!=_exVaults.tokens[tokenLength-1],"X Swap Vaults: can't swap same token");
         inputAmount[0] = IERC20(_exVaults.tokens[0]).balanceOf(address(this));
         IERC20(_exVaults.tokens[0]).safeTransferFrom(msg.sender,address(this),_exVaults.amountIn);
         outputAmount[0] = IERC20(_exVaults.tokens[0]).balanceOf(address(this)) - inputAmount[0];

@@ -11,15 +11,13 @@ contract rewardRecord{
     address public setPermissionAddress;
     address newPermissionAddress;
 
-    address[] public rewardRegistAddr;
+    // address[] public rewardRegistAddr;
 
     // address1 is user address;
     // address2 is coin/contract address;
     // userUpdateInfo is the updated info of user in this coin/contract address
     mapping(address => mapping(address => userUpdateInfo)) public userSelectedTypesAcountInfo;//
     mapping(address => uint) public selectedTypesAcountSum;//
-    mapping(uint => uint) public selectedTypesSum;//
-
     mapping(address => uint) public tokenOrVaultType;
 
     mapping(address => bool) public updateAddress;
@@ -65,10 +63,6 @@ contract rewardRecord{
                                            + _value
                                            - userSelectedTypesAcountInfo[_userAccount][msg.sender].userSelectedTypesAcountValue;
 
-        selectedTypesSum[tokenOrVaultType[msg.sender]] = selectedTypesAcountSum[msg.sender]
-                                                       + _value
-                                                       - userSelectedTypesAcountInfo[_userAccount][msg.sender].userSelectedTypesAcountValue;
-                                                       
         userSelectedTypesAcountInfo[_userAccount][msg.sender].userSelectedTypesAcountValue = _value;
         userSelectedTypesAcountInfo[_userAccount][msg.sender].latestTimeStamp = block.timestamp;
         
