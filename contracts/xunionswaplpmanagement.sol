@@ -26,11 +26,13 @@ contract xUnionSwapLpManager{
     address public xVaults;
     mapping(address => address) public  initialLpOwner;// lp--->owner
     mapping(address => uint) public initLpAmount;      // lp--->amount
-    uint public minLpLimit;   //  1,000 
+    uint public minLpLimit;      // Default settings 100 
+    uint public mintListLimit;   // Default settings 1,000 
 
     //-------------------------- constructor --------------------------
     constructor(address _setPermissionAddress) {
-        minLpLimit = 1000;
+        minLpLimit = 100;
+        mintListLimit = 1000;
         setPermissionAddress = _setPermissionAddress;
     }
     //----------------------------modifier ----------------------------
@@ -47,7 +49,7 @@ contract xUnionSwapLpManager{
     }
     //----------------------------- event -----------------------------
     event Settings(address _factory,address _vault,address _lpVault);
-    event SettingMinLpLimit(uint _minLpLimit);
+    event SettingMinLpLimit(uint _minLpLimit, uint _mintListLimit);
     event SetPA(address _setPermissionAddress);
     event AcceptPA(bool _TorF);
     event Subscribe(address indexed lp, address subscribeAddress, uint lpAmount);
@@ -61,9 +63,10 @@ contract xUnionSwapLpManager{
         lpVault = _lpVault;
         emit Settings(_factory, _vault, _lpVault);
     }
-    function settingMinLpLimit(uint _minLpLimit) external onlyPermissionAddress{
+    function settingMinLpLimit(uint _minLpLimit, uint _mintListLimit) external onlyPermissionAddress{
         minLpLimit = _minLpLimit;
-        emit SettingMinLpLimit( _minLpLimit);
+        mintListLimit = _mintListLimit;
+        emit SettingMinLpLimit( _minLpLimit, _mintListLimit);
     }
 
     function xLpInfoSettings(address _lp,uint32 _balanceFee, uint _a0) external onlyPermissionAddress{
@@ -117,7 +120,7 @@ contract xUnionSwapLpManager{
             ixLpVaults(lpVault).setInitTime(_lp);
             require(reserve[1]==0,"X SWAP LpManager: two reserve MUST be ZERO");//first Lp, need a 1000 xusd amount
             if(category==1){
-                require(_amountEstimated[1] >= minLpLimit * 1 ether,"X SWAP LpManager: First Lp need init SLC");
+                require(_amountEstimated[1] >= mintListLimit * 1 ether,"X SWAP LpManager: First Lp need init SLC");
                 require(_amountEstimated[0] >= 1000000,"X SWAP LpManager: Cant Be a too small amount");
                 _amountLp = _amountEstimated[1];
                 _amountActual[0] = _amountEstimated[0];

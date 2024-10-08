@@ -240,43 +240,4 @@ contract xUnionSwapCore{
         output = outputAmount[tokensLength-2];
     }
 
-
-    function afterSwap(structlibrary.exVaults memory _exVaults,uint a,uint b) public returns(bool ToF, structlibrary.exVaults memory _toUesd){
-        // uint k = _exVaults.tokens.length;
-        // uint out;
-        // uint amountIn ;
-        // if(a != 0 && b == 0){
-        //     amountIn = _exVaults.amountIn;
-        // }else{
-        //     amountIn = _exVaults.amountIn/4;
-        // }
-        // if(k == 2){
-        //     if(_exVaults.tokens[0]!=slcaddr && _exVaults.tokens[1]!=slcaddr){
-        //         ToF = false;
-        //         return;
-        //     }
-        //     uint tokens = new address[](4);
-        //     tokens[0] = _exVaults.tokens[0];
-        //     tokens[1] = slcaddr;
-        //     tokens[2] = _exVaults.tokens[1];
-        //     tokens[3] = _exVaults.tokens[0];
-        //     out = xExchangeEstimateInput(tokens, amountIn) ;
-        //     if (out > amountIn + 10000){
-        //         _toUesd.tokens = tokens;
-        //         _toUesd.amountIn = amountIn;
-        //         _toUesd.amountOut = amountIn;
-        //     }
-
-        // }else if(k ==3){
-
-        // }else if(k > 3){
-        //     ToF = false;
-        //     return;
-        // }
-
-    }
-    function afterSwap2(structlibrary.exVaults memory _exVaults,uint a,uint b) public  {
-
-    }
-    
 }
