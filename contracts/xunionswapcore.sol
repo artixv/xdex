@@ -51,7 +51,7 @@ contract xUnionSwapCore{
         }else{
             require(_inputToken == _lpDetails.assetAddr[0],"X SWAP CORE: WRONG Token Input");
         }
-        require(_lpDetails.reserve[j] >= _inputAmount*10,"X SWAP CORE: EXCEED  reserve Limits, NEED a smaller amount");
+        require(_lpDetails.reserve[j] >= _inputAmount*6,"X SWAP CORE: EXCEED  reserve Limits, NEED a smaller amount");
         pricexy = (_lpDetails.priceCumulative[j] * 1 ether) / _lpDetails.priceCumulative[1-j];
         pricexyInner = (_lpDetails.reserve[1-j] * 1 ether) / _lpDetails.reserve[j];
 
