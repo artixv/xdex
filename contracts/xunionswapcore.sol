@@ -81,13 +81,13 @@ contract xUnionSwapCore{
         
         k = (1 ether+a) * _lpDetails.reserve[1-j] /1 ether;
         k = k * (_lpDetails.reserve[j] + b);
-        _outputAmount = ((1 ether+a)*_lpDetails.reserve[1-j])/1 ether - k/(_lpDetails.reserve[j] + b + _inputAmount);
-        _outputAmount = _outputAmount *(10000-_lpDetails.balanceFee)/10000;//add fee to LP
-
         reserve[j] = _lpDetails.reserve[j] + _inputAmount;
+        priceCumulative[1-j] = _lpDetails.reserve[j] + b + _inputAmount;
+        _inputAmount = _inputAmount * (10000-_lpDetails.balanceFee)/10000;
+        _outputAmount = ((1 ether+a)*_lpDetails.reserve[1-j])/1 ether - k/(_lpDetails.reserve[j] + b + _inputAmount);
+        // _outputAmount = _outputAmount *(10000-_lpDetails.balanceFee)/10000;//add fee to LP
         reserve[1-j] = _lpDetails.reserve[1-j] - _outputAmount;
         priceCumulative[j] = (1 ether+a)*_lpDetails.reserve[1-j]/1 ether - _outputAmount;
-        priceCumulative[1-j] = _lpDetails.reserve[j] + b + _inputAmount;
     }
     // this swapCalculation2 used for estimate
     function swapCalculation2(address _lp,address _inputToken,uint _inputAmount)public view returns (uint _outputAmount,uint[2] memory reserve,uint[2] memory priceCumulative,uint b) {
@@ -138,13 +138,13 @@ contract xUnionSwapCore{
         
         k = (1 ether+a) * _lpDetails.reserve[1-j] /1 ether;
         k = k * (_lpDetails.reserve[j] + b);
-        _outputAmount = ((1 ether+a)*_lpDetails.reserve[1-j])/1 ether - k/(_lpDetails.reserve[j] + b + _inputAmount);
-        _outputAmount = _outputAmount *(10000-_lpDetails.balanceFee)/10000;//add fee to LP
-
         reserve[j] = _lpDetails.reserve[j] + _inputAmount;
+        priceCumulative[1-j] = _lpDetails.reserve[j] + b + _inputAmount;
+        _inputAmount = _inputAmount * (10000-_lpDetails.balanceFee)/10000;
+        _outputAmount = ((1 ether+a)*_lpDetails.reserve[1-j])/1 ether - k/(_lpDetails.reserve[j] + b + _inputAmount);
+        // _outputAmount = _outputAmount *(10000-_lpDetails.balanceFee)/10000;//add fee to LP
         reserve[1-j] = _lpDetails.reserve[1-j] - _outputAmount;
         priceCumulative[j] = (1 ether+a)*_lpDetails.reserve[1-j]/1 ether - _outputAmount;
-        priceCumulative[1-j] =  _lpDetails.reserve[j] + b + _inputAmount;
     }
     
     // this swapCalculation3 used for estimate: here _inputToken is outputToken, _inputAmount is outputAmount
@@ -196,8 +196,9 @@ contract xUnionSwapCore{
         
         k = (1 ether+a) * _lpDetails.reserve[1-j] /1 ether;
         k = k * (_lpDetails.reserve[j] + b);
-        _inputAmount = _inputAmount *(10000+_lpDetails.balanceFee)/10000;//add fee to LP
+        // _inputAmount = _inputAmount *(10000+_lpDetails.balanceFee)/10000;//add fee to LP
         _outputAmount = k/(((1 ether+a)*_lpDetails.reserve[1-j])/1 ether - _inputAmount) - _lpDetails.reserve[j] - b;
+        _outputAmount = _outputAmount *10000/(10000-_lpDetails.balanceFee);
 
         reserve[j] = _lpDetails.reserve[j] + _outputAmount;
         reserve[1-j] = _lpDetails.reserve[1-j] - _inputAmount;
