@@ -4,6 +4,8 @@
 pragma solidity 0.8.6;
 
 interface ixLpManager{
+    function minLpLimit() external view returns(uint);      // Default settings 100 
+    function mintListLimit() external view returns(uint);   
     function xLpSubscribe(address _lp,uint[2] memory _amountEstimated) external returns(uint[2] memory _amountActual,uint _amountLp);
     function xLpRedeem(address _lp,uint _amountLp) external returns(uint[2] memory _amount);
 }

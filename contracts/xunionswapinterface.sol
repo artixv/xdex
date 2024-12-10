@@ -335,6 +335,10 @@ contract xUnionSwapUserInterface{
     function getLpSettings(address _lp) public view returns(uint32 balanceFee, uint a0) {
         return ixVaults(xvaults).getLpSettings(_lp);
     }
+    //lpmanager
+    function minLpAndListLimit() public view returns(uint mintListLimit, uint minLpLimit) {
+        return (ixLpManager(xlpmanager).mintListLimit(), ixLpManager(xlpmanager).minLpLimit());
+    }
     // lpvaults 
     function getInitialLpOwner(address lp) public view returns (address) {
         return iLpVaultInfo(xlpvaults).initialLpOwner(lp);

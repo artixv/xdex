@@ -31,8 +31,8 @@ contract xUnionSwapLpManager{
 
     //-------------------------- constructor --------------------------
     constructor(address _setPermissionAddress) {
-        minLpLimit = 100;
-        mintListLimit = 1000;
+        minLpLimit = 10;
+        mintListLimit = 100;
         setPermissionAddress = _setPermissionAddress;
     }
     //----------------------------modifier ----------------------------
