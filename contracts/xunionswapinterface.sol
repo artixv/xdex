@@ -12,6 +12,7 @@ import "./interfaces/ilpvaultinfo.sol";
 import "./interfaces/ixlpmanager.sol";
 import "./interfaces/ixcore.sol";
 import "./interfaces/iwxcfx.sol";
+import "./interfaces/islcBalance.sol";
 
 pragma solidity 0.8.6;
 
@@ -23,6 +24,7 @@ contract xUnionSwapUserInterface{
     address public xlpvaults;
     address public xlpmanager;
     address public xCore;
+    address public slcVaultV3;
 
     address public wCFX;
     // address public CFXMock;
@@ -60,6 +62,9 @@ contract xUnionSwapUserInterface{
         xCore = _xCore;
         wCFX = _wCFX;
         emit SystemSetup( _factory, _vaults, _lpvaults, _lpManager, _xCore, _wCFX);
+    }
+    function slcVaultV3Setup(address _slcVaultV3) external onlyLpSetter{
+        slcVaultV3 = _slcVaultV3;
     }
 
     function transferLpSetter(address _set) external onlyLpSetter{
@@ -228,6 +233,7 @@ contract xUnionSwapUserInterface{
             (bool success, ) = receiver.call{value:address(this).balance}("");
             require(success,"X SWAP Interface: CFX Transfer Failed");
         }
+        islcBalance(slcVaultV3).randomRegression();
     }
     // vaults :: for exchange estimate
     function xExchangeEstimateInput(address[] memory tokens,uint amountIn) external  view returns(uint output, uint[3] memory priceImpactAndFees, uint b) {

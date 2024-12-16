@@ -10,13 +10,9 @@ import "./interfaces/ixvaults.sol";
 contract xUnionSwapCore{
 
     address public vaults;
-    // address public riskMitigationFund;
-    // address public slcaddr;
 
     constructor(address _vaults) {
         vaults = _vaults;
-        // riskMitigationFund = _riskMitigationFund;
-        // slcaddr = _slcaddr;
     }
 
     //-----------------------------------------------------------------
